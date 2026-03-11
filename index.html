@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="si">
+<head>
+    <meta charset="UTF-8">
+    <title>Direct MP3 Scraper</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #0e1117; color: white; text-align: center; padding: 50px; }
+        .main-box { background: #161b22; padding: 40px; border-radius: 20px; max-width: 450px; margin: auto; border: 1px solid #30363d; box-shadow: 0 10px 40px rgba(0,0,0,0.6); }
+        h2 { color: #58a6ff; margin-bottom: 20px; }
+        input { width: 90%; padding: 15px; border-radius: 10px; border: 1px solid #30363d; background: #0d1117; color: white; font-size: 14px; margin-bottom: 20px; outline: none; }
+        input:focus { border-color: #58a6ff; }
+        .download-btn { background: #238636; color: white; border: none; padding: 15px 30px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 90%; font-size: 16px; transition: 0.3s; }
+        .download-btn:hover { background: #2ea043; transform: scale(1.02); }
+        #status-msg { margin-top: 25px; font-size: 14px; color: #8b949e; }
+        
+        /* Loading Animation */
+        .spinner { border: 4px solid rgba(255, 255, 255, 0.1); border-left-color: #58a6ff; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; display: none; margin: 15px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="main-box">
+    <h2>Music Scraper Pro</h2>
+    <p style="color: #8b949e; font-size: 13px;">YouTube ලින්ක් එක ලබා දී සෘජුවම බාගත කරන්න.</p>
+    
+    <input type="text" id="ytUrl" placeholder="https://www.youtube.com/watch?v=...">
+    <button class="download-btn" onclick="runScraper()">Download MP3</button>
+    
+    <div class="spinner" id="spinner"></div>
+    <div id="status-msg"></div>
+</div>
+
+<script>
+async function runScraper() {
+    const url = document.getElementById('ytUrl').value.trim();
+    const status = document.getElementById('status-msg');
+    const spinner = document.getElementById('spinner');
+
+    if (!url) return alert("කරුණාකර YouTube ලින්ක් එක ඇතුළත් කරන්න!");
+
+    status.innerText = "සර්වර් එකට සම්බන්ධ වෙමින් පවතී... (මඳක් රැඳී සිටින්න)";
+    status.style.color = "#8b949e";
+    spinner.style.display = "block";
+
+    // අපි පාවිච්චි කරන්නේ නොමිලේ දෙන CORS Proxy එකක්
+    // මෙය බ්‍රවුසරයේ ඇති 'Security Block' එක මගහරවා දත්ත ලබා ගැනීමට උදවු වේ.
+    const proxy = "https://cors-anywhere.herokuapp.com/"; // සටහන බලන්න*
+    const apiUrl = "https://api.cobalt.tools/api/json";
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            },
+            body: JSON.stringify({
+                url: url,
+                downloadMode: "audio",
+                audioFormat: "mp3"
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.url) {
+            status.innerText = "සූදානම්! සින්දුව බාගත වෙමින් පවතී...";
+            status.style.color = "#3fb950";
+            
+            // සයිට් එක ඇතුළෙම සින්දුව බාගත කරවීම (Auto-trigger download)
+            const a = document.createElement('a');
+            a.href = data.url;
+            a.setAttribute('download', 'music.mp3');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        } else {
+            status.innerText = "සින්දුව ලබාගත නොහැකි විය. වෙනත් ලින්ක් එකක් උත්සාහ කරන්න.";
+        }
+    } catch (e) {
+        console.error(e);
+        status.innerText = "දෝෂයක් ඇති විය! නැවත උත්සාහ කරන්න.";
+        status.style.color = "#f85149";
+    } finally {
+        spinner.style.display = "none";
+    }
+}
+</script>
+
+</body>
+</html>
